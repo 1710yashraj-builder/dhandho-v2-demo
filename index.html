@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dhandho Restaurant — v2 on the OS spine</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <b>Dhandho Restaurant</b>
+    <span class="sub">v2 reference · device <span id="dev">—</span></span>
+  </div>
+  <div class="today">
+    <span id="salesCount">0</span> bills
+    <b id="salesTotal">₹0</b>
+  </div>
+</header>
+
+<div id="card" class="card hidden">
+  <div class="card-body">
+    <b id="cardTitle"></b>
+    <p id="cardText"></p>
+  </div>
+  <div class="card-acts">
+    <button id="cardYes" class="btn go">Haan</button>
+    <button id="cardNo" class="btn ghost">Nahi</button>
+  </div>
+</div>
+
+<nav class="tabs">
+  <button class="tab on" data-view="counter">Counter</button>
+  <button class="tab" data-view="kitchen">Rasoi</button>
+  <button class="tab" data-view="owner">Malik</button>
+</nav>
+
+<main id="screen"></main>
+
+<script src="dhandho-local.js"></script>
+<script src="local-shim.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
