@@ -192,7 +192,12 @@
         '<div class="line"><b>Mez ' + (table ? table.label : '—') + '</b>' +
         '<span class="chip">#' + k.number + ' · ' + k.status + '</span></div>' +
         items.map(function (l) {
-          return '<div class="line"><span>' + l.name + '</span><span>×' + (l.qtyMilli / 1000) + '</span></div>';
+          /* Quantity FIRST and big — a cook reads this across a hot kitchen,
+             at a glance, and needs the number before the name. */
+          return '<div class="line kotline"><span><b class="kqty">' +
+            (l.qtyMilli / 1000) + '&times;</b> ' + l.name +
+            (l.variant === 'half' ? ' <span class="dim">half</span>' : '') +
+            '</span></div>';
         }).join('') +
         (k.status === 'new'
           ? '<button class="btn go block" data-ready="' + k.id + '">Ban gaya ✓</button>' : '') +

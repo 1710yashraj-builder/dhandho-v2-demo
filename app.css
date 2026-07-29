@@ -109,3 +109,7 @@ h2 { font-size: 15px; margin: 18px 0 8px; font-weight: 600; }
   border-radius: 11px; background: #2f9e63; color: #fff;
   font-size: 12px; font-weight: 600; line-height: 22px; text-align: center;
 }
+
+/* the cook reads the number first, from a distance */
+.kqty { font-size: 20px; color: #7fe3a8; margin-right: 6px; font-variant-numeric: tabular-nums; }
+.kotline { padding: 6px 0; }
