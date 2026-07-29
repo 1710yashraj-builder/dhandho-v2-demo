@@ -1,0 +1,483 @@
+/* ============================================================
+   DHANDHO GLASS  —  Liquid Glass design system
+   Inspired by iOS 26 Liquid Glass. Adapted, not copied.
+
+   PERFORMANCE CONTRACT (build-standards M2 / M4 / P):
+   - Real backdrop-filter is used on AT MOST 2 layers per screen:
+     (1) the top chrome / nav bar, (2) one overlay (sheet or modal).
+   - Everything else uses "cast glass": translucent fill + gradient +
+     specular inset highlight. Looks identical at rest, costs nothing,
+     and is safe inside scrolling lists.
+   - Only transform + opacity are ever animated.
+   - .lite on <html> removes every blur and translucency. Auto-enabled
+     on <=4GB devices. Layout is byte-identical in lite mode.
+   ============================================================ */
+
+:root {
+  /* Buildanta brand */
+  --blue-950: #071a2e;
+  --blue-900: #0f2f4f;
+  --blue-800: #1f4e79;   /* Buildanta blue */
+  --blue-600: #2e6da4;
+  --blue-400: #5b9bd5;
+  --blue-200: #a8cdf0;
+
+  --cream-50: #fffdf8;
+  --cream-100: #fdf6e9;
+  --cream-200: #f5e9d2;
+
+  --amber:  #e8a33d;
+  --green:  #2f9e6b;
+  --red:    #d1483f;
+  --violet: #7b61b8;
+
+  /* Glass tokens — light */
+  --glass-fill:      rgba(255, 255, 255, 0.16);
+  --glass-fill-soft: rgba(255, 255, 255, 0.10);
+  --glass-fill-hi:   rgba(255, 255, 255, 0.28);
+  --glass-border:    rgba(255, 255, 255, 0.34);
+  --glass-border-lo: rgba(255, 255, 255, 0.16);
+  --glass-shadow:    0 10px 34px rgba(7, 26, 46, 0.20);
+  --glass-shadow-lo: 0 3px 12px rgba(7, 26, 46, 0.14);
+  --specular:        rgba(255, 255, 255, 0.55);
+
+  --ink:        #0b1f33;
+  --ink-2:      rgba(11, 31, 51, 0.68);
+  --ink-3:      rgba(11, 31, 51, 0.45);
+  --on-glass:   #ffffff;
+  --on-glass-2: rgba(255, 255, 255, 0.78);
+  --on-glass-3: rgba(255, 255, 255, 0.55);
+
+  --focus: #ffd479;
+
+  --r-sm: 12px;
+  --r:    18px;
+  --r-lg: 24px;
+  --r-xl: 30px;
+
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.42, 0.5, 1);
+  --t-press: 130ms;
+  --t-ui:    200ms;
+  --t-sheet: 280ms;
+
+  --blur-chrome: 22px;
+  --sat: 175%;
+
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+/* ---------- Base ---------- */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
+               "Noto Sans Devanagari", Roboto, system-ui, sans-serif;
+  color: var(--on-glass);
+  background: var(--bg-grad);
+  background-attachment: fixed;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The wallpaper is STATIC. Never a live-blurred moving image — that is the
+   single most expensive mistake in a glass UI on a budget Android. */
+:root {
+  --bg-grad:
+    radial-gradient(1200px 800px at 12% -8%,  #2f6ea8 0%, transparent 58%),
+    radial-gradient(900px 700px  at 92% 4%,   #17567f 0%, transparent 55%),
+    radial-gradient(800px 900px  at 78% 96%,  #123f66 0%, transparent 60%),
+    radial-gradient(700px 600px  at 8% 92%,   #1d5c86 0%, transparent 58%),
+    linear-gradient(168deg, #0f3050 0%, #113f63 46%, #0b2440 100%);
+}
+
+/* ---------- Glass primitives ---------- */
+
+/* CAST GLASS — no backdrop-filter. Safe anywhere, including scrolling lists. */
+.glass {
+  position: relative;
+  background:
+    linear-gradient(180deg, var(--glass-fill-hi) 0%, var(--glass-fill) 34%, var(--glass-fill-soft) 100%);
+  border: 1px solid var(--glass-border-lo);
+  border-top-color: var(--glass-border);
+  border-radius: var(--r);
+  box-shadow: var(--glass-shadow-lo), inset 0 1px 0 var(--specular);
+  isolation: isolate;
+}
+
+/* The specular sweep — the thing that reads as "liquid". Pure gradient, no cost. */
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg,
+      rgba(255,255,255,0.22) 0%,
+      rgba(255,255,255,0.05) 18%,
+      rgba(255,255,255,0) 42%,
+      rgba(255,255,255,0) 74%,
+      rgba(255,255,255,0.08) 100%);
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+.glass-raised { box-shadow: var(--glass-shadow), inset 0 1px 0 var(--specular); }
+
+/* TRUE GLASS — real backdrop blur. Budget: max 2 per screen.
+   Reserved for the top chrome and one overlay. */
+.glass-live {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.09));
+  -webkit-backdrop-filter: blur(var(--blur-chrome)) saturate(var(--sat));
+  backdrop-filter: blur(var(--blur-chrome)) saturate(var(--sat));
+  border: 1px solid var(--glass-border-lo);
+  border-top-color: var(--glass-border);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--specular);
+}
+
+/* Tinted glass variants */
+.tint-blue   { background-image: linear-gradient(180deg, rgba(91,155,213,.34), rgba(31,78,121,.16)); }
+.tint-green  { background-image: linear-gradient(180deg, rgba(47,158,107,.36), rgba(47,158,107,.12)); }
+.tint-amber  { background-image: linear-gradient(180deg, rgba(232,163,61,.38), rgba(232,163,61,.12)); }
+.tint-red    { background-image: linear-gradient(180deg, rgba(209,72,63,.36), rgba(209,72,63,.12)); }
+.tint-violet { background-image: linear-gradient(180deg, rgba(123,97,184,.36), rgba(123,97,184,.12)); }
+.tint-cream  { background-image: linear-gradient(180deg, rgba(253,246,233,.30), rgba(253,246,233,.08)); }
+
+/* ---------- Typography ---------- */
+h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.015em; line-height: 1.18; }
+h1 { font-size: 26px; }
+h2 { font-size: 20px; }
+h3 { font-size: 16px; }
+p  { margin: 0; }
+
+.t-lg   { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; }
+.t-xl   { font-size: 44px; font-weight: 720; letter-spacing: -0.03em; }
+.t-sm   { font-size: 13px; }
+.t-xs   { font-size: 11.5px; }
+.dim    { color: var(--on-glass-2); }
+.dimmer { color: var(--on-glass-3); }
+.mono   { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.up     { text-transform: uppercase; letter-spacing: .09em; font-size: 10.5px; font-weight: 640; }
+
+/* Legibility guard: text over busy glass gets a chip backing (WCAG AA). */
+.chip-back {
+  background: rgba(7, 26, 46, 0.34);
+  border-radius: 999px;
+  padding: 3px 10px;
+  display: inline-block;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid var(--glass-border-lo);
+  border-top-color: var(--glass-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--glass-fill-hi), var(--glass-fill));
+  box-shadow: var(--glass-shadow-lo), inset 0 1px 0 var(--specular);
+  color: var(--on-glass);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  /* M2: transform only */
+  transition: transform var(--t-press) var(--ease-out), opacity var(--t-press) linear;
+}
+.btn:active { transform: scale(0.965); }
+.btn:disabled { opacity: .42; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: linear-gradient(180deg, #4d9ae0, #2266a6);
+  border-color: rgba(255,255,255,.42);
+  box-shadow: 0 6px 20px rgba(18, 70, 120, .42), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.btn-go {
+  background: linear-gradient(180deg, #45c088, #1f8557);
+  border-color: rgba(255,255,255,.42);
+  box-shadow: 0 6px 20px rgba(20, 110, 74, .40), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.btn-warn { background: linear-gradient(180deg, #f0b35a, #cf8420); border-color: rgba(255,255,255,.40); }
+.btn-danger { background: linear-gradient(180deg, #e0645a, #ad3931); border-color: rgba(255,255,255,.36); }
+.btn-ghost { background: rgba(255,255,255,.06); box-shadow: none; }
+.btn-lg { min-height: 58px; font-size: 17px; border-radius: 17px; padding: 0 24px; }
+.btn-sm { min-height: 36px; font-size: 13px; border-radius: 11px; padding: 0 13px; }
+.btn-block { width: 100%; }
+
+/* M3 — visible keyboard focus on every interactive control. Never removed. */
+:where(button, a, [role="button"], [tabindex], input, select, textarea):focus-visible {
+  outline: 2.5px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* ---------- Inputs ---------- */
+.field {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border-radius: 13px;
+  border: 1px solid var(--glass-border-lo);
+  background: rgba(7, 26, 46, 0.26);
+  color: var(--on-glass);
+  font: inherit;
+  font-size: 16px; /* 16px stops iOS zoom-on-focus */
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+}
+.field::placeholder { color: var(--on-glass-3); }
+.field:focus { border-color: rgba(255,255,255,.5); outline: none; }
+.field:focus-visible { outline: 2.5px solid var(--focus); outline-offset: 2px; }
+select.field { appearance: none; background-image: none; }
+label.lbl { display: block; font-size: 12.5px; color: var(--on-glass-2); margin: 0 0 6px 2px; font-weight: 560; }
+
+/* ---------- Pills, badges ---------- */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 999px;
+  font-size: 12px; font-weight: 600;
+  background: rgba(255,255,255,.14);
+  border: 1px solid var(--glass-border-lo);
+}
+.pill-green  { background: rgba(47,158,107,.30);  border-color: rgba(120,235,180,.40); }
+.pill-amber  { background: rgba(232,163,61,.30);  border-color: rgba(255,206,130,.40); }
+.pill-red    { background: rgba(209,72,63,.32);   border-color: rgba(255,150,140,.40); }
+.pill-blue   { background: rgba(91,155,213,.30);  border-color: rgba(160,205,245,.40); }
+.pill-violet { background: rgba(123,97,184,.32);  border-color: rgba(190,170,240,.40); }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot-live { background: #56e39f; box-shadow: 0 0 0 0 rgba(86,227,159,.6); animation: livePulse 2.2s var(--ease-out) infinite; }
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(86,227,159,.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(86,227,159,0); }
+  100% { box-shadow: 0 0 0 0 rgba(86,227,159,0); }
+}
+
+/* ---------- Layout ---------- */
+#app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+
+.topbar {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  z-index: 40;
+}
+.topbar h2 { font-size: 17px; }
+/* The meta row must never wrap — a two-line topbar shoves the whole app down. */
+#topMeta {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+#topMeta > * { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#topMeta .pill { flex: 0 0 auto; }
+.topbar .btn { flex: 0 0 auto; }
+
+.screen {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px;
+  padding-bottom: calc(96px + var(--safe-b));
+  scrollbar-width: thin;
+}
+.screen::-webkit-scrollbar { width: 8px; }
+.screen::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 99px; }
+
+.tabbar {
+  position: fixed; left: 10px; right: 10px;
+  bottom: calc(10px + var(--safe-b));
+  display: flex; gap: 4px; padding: 6px;
+  border-radius: var(--r-xl);
+  z-index: 50;
+}
+.tabbar button {
+  flex: 1; min-height: 52px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 0; background: transparent; color: var(--on-glass-3);
+  font: inherit; font-size: 10.5px; font-weight: 600;
+  border-radius: 22px; cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out), color var(--t-press) linear;
+}
+.tabbar button .ic { font-size: 20px; line-height: 1; }
+.tabbar button:active { transform: scale(.94); }
+.tabbar button[aria-current="page"] {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,.10));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 3px 12px rgba(7,26,46,.22);
+}
+
+.row  { display: flex; align-items: center; gap: 10px; }
+.row-b { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.col  { display: flex; flex-direction: column; gap: 10px; }
+.wrap { flex-wrap: wrap; }
+.grow { flex: 1 1 auto; min-width: 0; }
+.card { padding: 14px; }
+.gap6 { gap: 6px; } .gap8 { gap: 8px; } .gap14 { gap: 14px; }
+.mt8 { margin-top: 8px; } .mt14 { margin-top: 14px; } .mt20 { margin-top: 20px; }
+.center { text-align: center; }
+.hidden { display: none !important; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.grid { display: grid; gap: 10px; }
+.g2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.g4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+/* Three item tiles across on a 360px phone. Two is not enough — the waiter
+   ends up scrolling on the one screen that must never scroll. */
+.g-auto { grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); }
+
+/* Category chips ride on ONE line that scrolls sideways. Wrapping them to
+   three rows pushes the item grid off the screen. */
+.chiprow {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+.chiprow::-webkit-scrollbar { display: none; }
+.chiprow > * { flex: 0 0 auto; }
+
+/* ---------- Sheets / modals (the 2nd and last true-glass layer) ---------- */
+.scrim {
+  position: fixed; inset: 0; z-index: 90;
+  background: rgba(4, 16, 30, 0.52);
+  opacity: 0;
+  transition: opacity var(--t-ui) linear;
+}
+.scrim.show { opacity: 1; }
+
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
+  max-height: 88dvh; display: flex; flex-direction: column;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: 8px 14px calc(16px + var(--safe-b));
+  transform: translateY(101%);
+  transition: transform var(--t-sheet) var(--ease-out);
+}
+.sheet.show { transform: translateY(0); }
+.sheet-grip {
+  width: 42px; height: 5px; border-radius: 99px;
+  background: rgba(255,255,255,.34); margin: 6px auto 12px;
+  flex: 0 0 auto;
+}
+.sheet-body { overflow-y: auto; overscroll-behavior: contain; }
+
+/* ---------- Toast ---------- */
+#toaster {
+  position: fixed; left: 12px; right: 12px; z-index: 200;
+  /* Clear the fixed action bar (bottom 72px + 76px tall) — a toast landing on
+     top of the BHEJO button hides the control it is talking about. */
+  bottom: calc(156px + var(--safe-b));
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+  pointer-events: none;
+}
+.toast {
+  max-width: 460px; width: fit-content;
+  padding: 11px 16px; border-radius: 14px;
+  font-size: 14px; font-weight: 560;
+  transform: translateY(10px); opacity: 0;
+  transition: transform var(--t-ui) var(--ease-out), opacity var(--t-ui) linear;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ---------- Demo badge (build-standards D3) ---------- */
+.demo-badge {
+  position: fixed; top: calc(6px + env(safe-area-inset-top, 0px)); right: 10px; z-index: 60;
+  font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  padding: 4px 9px; border-radius: 999px;
+  background: rgba(232,163,61,.34);
+  border: 1px solid rgba(255,206,130,.5);
+  color: #fff; pointer-events: none;
+}
+
+/* ---------- Entrance motion (rare surfaces only — M1) ---------- */
+.rise { animation: rise var(--t-sheet) var(--ease-out) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.pop { animation: pop 320ms var(--ease-spring) both; }
+@keyframes pop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
+
+/* Success flash — allowed only on rare actions (M2: opacity of a pseudo-element) */
+.flash-ok { position: relative; }
+.flash-ok::before {
+  content: ""; position: absolute; inset: -2px; border-radius: inherit;
+  box-shadow: 0 0 22px rgba(86,227,159,.75);
+  opacity: 0; pointer-events: none;
+}
+.flash-ok.go::before { animation: flashOk 620ms var(--ease-out) 1; }
+@keyframes flashOk { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ============================================================
+   LITE MODE  —  M4 kill switch.
+   Same layout, zero blur, solid surfaces. Auto for <=4GB devices.
+   ============================================================ */
+html.lite body { --bg-grad: linear-gradient(168deg, #0f3050 0%, #123f63 48%, #0b2440 100%); }
+html.lite .glass,
+html.lite .glass-live,
+html.lite .btn,
+html.lite .tabbar,
+html.lite .sheet,
+html.lite .topbar {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.lite .glass, html.lite .glass-live {
+  background: #16405f;
+  border-color: rgba(255,255,255,.20);
+  box-shadow: 0 2px 8px rgba(0,0,0,.28);
+}
+html.lite .glass::after { display: none; }
+html.lite .tint-blue   { background: #1c5382; }
+html.lite .tint-green  { background: #1c6247; }
+html.lite .tint-amber  { background: #7a5417; }
+html.lite .tint-red    { background: #7a2b26; }
+html.lite .tint-violet { background: #4a3a78; }
+html.lite .tint-cream  { background: #2a4f6f; }
+html.lite .btn { background: #23557d; box-shadow: none; }
+html.lite .btn-primary { background: #2266a6; }
+html.lite .btn-go { background: #1f8557; }
+html.lite .btn-warn { background: #cf8420; }
+html.lite .btn-danger { background: #ad3931; }
+html.lite .field { background: #0e2f4b; }
+html.lite .dot-live { animation: none; }
+
+/* Automatic honesty: if the browser cannot do backdrop-filter at all,
+   the cast-glass surfaces still look right because they never needed it. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-live { background: rgba(16, 56, 90, 0.92); }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .sheet { transition: none; }
+}
+
+/* ---------- Wide screens (counter PC / tablet) ---------- */
+@media (min-width: 900px) {
+  #app { max-width: 1180px; margin: 0 auto; }
+  .g-auto { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
+  .tabbar { left: 50%; transform: translateX(-50%); width: min(760px, calc(100% - 20px)); }
+}

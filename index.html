@@ -2,43 +2,87 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Dhandho Restaurant — v2 on the OS spine</title>
-<link rel="stylesheet" href="app.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0f3050">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dhandho Restaurant">
+<title>Dhandho Restaurant</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/glass.css">
 </head>
 <body>
-<header class="top">
-  <div>
-    <b>Dhandho Restaurant</b>
-    <span class="sub">v2 reference · device <span id="dev">—</span></span>
-  </div>
-  <div class="today">
-    <span id="salesCount">0</span> bills
-    <b id="salesTotal">₹0</b>
-  </div>
-</header>
 
-<div id="card" class="card hidden">
-  <div class="card-body">
-    <b id="cardTitle"></b>
-    <p id="cardText"></p>
-  </div>
-  <div class="card-acts">
-    <button id="cardYes" class="btn go">Haan</button>
-    <button id="cardNo" class="btn ghost">Nahi</button>
-  </div>
+<div id="app">
+
+  <!-- TRUE-GLASS LAYER 1 of 2: the top chrome -->
+  <header class="topbar glass-live" id="topbar">
+    <button class="btn btn-sm btn-ghost" id="btnHome" title="Home" aria-label="Home">
+      <span aria-hidden="true">&#127869;</span>
+    </button>
+    <div class="grow" style="min-width:0">
+      <div class="row gap6" style="align-items:baseline">
+        <h2 class="truncate" id="outletName">Dhandho Restaurant</h2>
+      </div>
+      <div class="row gap6 t-xs dim" id="topMeta"></div>
+    </div>
+    <button class="btn btn-sm btn-ghost" id="btnStaff" title="Who is on shift"></button>
+    <button class="btn btn-sm btn-ghost" id="btnDoctor" title="App health" aria-label="App health">
+      <span aria-hidden="true">&#129658;</span>
+    </button>
+    <button class="btn btn-sm btn-ghost" id="btnSettings" title="Settings" aria-label="Settings">
+      <span aria-hidden="true">&#9881;</span>
+    </button>
+  </header>
+
+  <!-- Un-ignorable status strips. These exist because a silent failure at
+       9:40pm on a Friday is how a restaurant loses trust in software. -->
+  <div id="alertBar" class="hidden"></div>
+
+  <main class="screen" id="screen" tabindex="-1"></main>
+
+  <nav class="tabbar glass-live" id="tabbar" aria-label="Main">
+    <button data-view="waiter"  aria-current="page"><span class="ic" aria-hidden="true">&#129386;</span><span id="tabWaiter">Mez</span></button>
+    <button data-view="kitchen"><span class="ic" aria-hidden="true">&#127859;</span><span id="tabKitchen">Rasoi</span></button>
+    <button data-view="cashier"><span class="ic" aria-hidden="true">&#129534;</span><span id="tabCashier">Counter</span></button>
+    <button data-view="owner"><span class="ic" aria-hidden="true">&#128200;</span><span id="tabOwner">Malik</span></button>
+  </nav>
 </div>
 
-<nav class="tabs">
-  <button class="tab on" data-view="counter">Counter</button>
-  <button class="tab" data-view="kitchen">Rasoi</button>
-  <button class="tab" data-view="owner">Malik</button>
-</nav>
+<div class="scrim" id="scrim" hidden></div>
 
-<main id="screen"></main>
+<!-- TRUE-GLASS LAYER 2 of 2: one sheet, reused for everything -->
+<section class="sheet glass-live" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="sheet-grip" aria-hidden="true"></div>
+  <div class="row-b" style="padding:0 2px 10px">
+    <h3 id="sheetTitle">&nbsp;</h3>
+    <button class="btn btn-sm btn-ghost" id="sheetClose" aria-label="Close">&#10005;</button>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</section>
 
+<div id="toaster" aria-live="polite"></div>
+<div class="demo-badge hidden" id="demoBadge">DEMO &middot; SAMPLE DATA</div>
+
+<!-- Order matters: core -> i18n -> cloud -> data -> ops -> sync -> shell -> screens -->
+<script src="js/core.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/data.js"></script>
+<script src="js/ops.js"></script>
+<script src="js/qr.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/print.js"></script>
+<script src="js/app.js"></script>
+<script src="js/ui-setup.js"></script>
+<script src="js/ui-waiter.js"></script>
+<script src="js/ui-kitchen.js"></script>
+<script src="js/ui-cashier.js"></script>
+<script src="js/ui-owner.js"></script>
+<script src="js/ui-doctor.js"></script>
 <script src="dhandho-local.js"></script>
-<script src="local-shim.js"></script>
-<script src="app.js"></script>
+<script src="js/spine-bridge.js"></script>
 </body>
 </html>
