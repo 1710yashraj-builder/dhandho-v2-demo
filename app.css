@@ -85,3 +85,27 @@ h2 { font-size: 15px; margin: 18px 0 8px; font-weight: 600; }
   background: rgba(0,0,0,.82); color: #fff; padding: 10px 16px; border-radius: 12px;
   font-size: 14px; z-index: 20; max-width: 90vw; text-align: center;
 }
+
+/* --- quantity on one row: −  3×  + ------------------------------------- */
+.qtywrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.qbtn {
+  width: 34px; height: 34px; flex: 0 0 34px;
+  border-radius: 10px; border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06); color: #eaf2ff;
+  font-size: 19px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.qbtn:active { background: rgba(255,255,255,.16); }
+.qty { min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; }
+.lname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* a dish already on the order carries its count, so the waiter never has to
+   read the list back to know how many went in */
+.cell.item { position: relative; }
+.cell.item.picked { border-color: rgba(86,227,159,.55); }
+.count {
+  position: absolute; top: 6px; right: 8px;
+  min-width: 22px; height: 22px; padding: 0 6px;
+  border-radius: 11px; background: #2f9e63; color: #fff;
+  font-size: 12px; font-weight: 600; line-height: 22px; text-align: center;
+}

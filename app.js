@@ -106,17 +106,49 @@
     var lb = el('#lines');
     if (!lines.length) lb.innerHTML = '<span class="dim">Abhi kuch nahi</span>';
     else lb.innerHTML = lines.map(function (l) {
-      return '<div class="line"><span>' + l.name +
-        (l.qtyMilli !== 1000 ? ' <span class="dim">×' + (l.qtyMilli / 1000) + '</span>' : '') +
-        (l.fired ? ' <span class="chip">bhej diya</span>' : '') +
-        '</span><span>' + money(Math.round(l.unitPaise * l.qtyMilli / 1000)) + '</span></div>';
+      var qty = l.qtyMilli / 1000;
+      /* Quantity on ONE row with -/+ , so four rotis read "4x" instead of
+         four identical lines the waiter must scroll and the kitchen re-count.
+         A line already sent to the kitchen keeps its steppers too, but taking
+         it to zero voids it (on the record) rather than deleting it. */
+      return '<div class="line">' +
+        '<span class="qtywrap">' +
+          '<button class="qbtn" data-minus="' + l.id + '" aria-label="kam karo">−</button>' +
+          '<b class="qty">' + qty + '&times;</b>' +
+          '<button class="qbtn" data-plus="' + l.id + '" aria-label="aur">+</button>' +
+          '<span class="lname">' + l.name +
+            (l.variant === 'half' ? ' <span class="dim">half</span>' : '') +
+            (l.fired ? ' <span class="chip">bhej diya</span>' : '') +
+          '</span>' +
+        '</span>' +
+        '<span>' + money(Math.round(l.unitPaise * l.qtyMilli / 1000)) + '</span>' +
+      '</div>';
     }).join('');
+
+    function bump(lineId, delta) {
+      var l = lines.filter(function (x) { return x.id === lineId; })[0];
+      if (!l) return;
+      var next = l.qtyMilli + delta * 1000;
+      api('/line/qty', { lineId: lineId, qtyMilli: next }).then(refresh);
+    }
+    Array.prototype.forEach.call(lb.querySelectorAll('[data-plus]'), function (b) {
+      b.onclick = function () { bump(b.dataset.plus, +1); };
+    });
+    Array.prototype.forEach.call(lb.querySelectorAll('[data-minus]'), function (b) {
+      b.onclick = function () { bump(b.dataset.minus, -1); };
+    });
 
     var mg = el('#menu');
     (S.menu || []).forEach(function (it) {
+      /* How many of this dish are already on the order — so the waiter can see
+         "Roti 4" on the tile without reading the list back. */
+      var onOrder = lines.reduce(function (n, l) {
+        return l.menuItemId === it.id && !l.voided ? n + l.qtyMilli / 1000 : n;
+      }, 0);
       var b = document.createElement('button');
-      b.className = 'cell item';
-      b.innerHTML = '<b>' + it.name + '</b><small>' + money(it.pricePaise) +
+      b.className = 'cell item' + (onOrder ? ' picked' : '');
+      b.innerHTML = (onOrder ? '<span class="count">' + onOrder + '</span>' : '') +
+        '<b>' + it.name + '</b><small>' + money(it.pricePaise) +
         (it.available ? '' : ' · band') + '</small>';
       b.disabled = !it.available;
       b.onclick = function () {

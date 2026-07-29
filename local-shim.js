@@ -34,6 +34,7 @@
         case '/state': return A.state();
         case '/order': return A.order(body.tableId);
         case '/line': return A.addLine(body.orderId, body.menuItemId, body.variant);
+        case '/line/qty': return A.setLineQty(body.lineId, body.qtyMilli);
         case '/fire': return A.fire(body.orderId);
         case '/bill': return A.bill(body.orderId, body.mode || 'cash');
         case '/order/cancel': return A.cancel(body.orderId, body.reason);
