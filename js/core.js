@@ -287,6 +287,7 @@
         serviceChargePct: 0,      // ALWAYS starts at 0 (CCPA / Delhi HC)
         tier: 'restaurant',       // counter | restaurant | pro
         lite: false,
+        theme: 'auto',            // auto | dark | light — auto follows the phone
         pinHash: null,            // device-local: salted with device.id, never synced
         pinDev: null,             // which handset that hash was made on
         tables: 12

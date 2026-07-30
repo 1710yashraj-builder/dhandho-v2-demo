@@ -167,7 +167,7 @@
             '<div class="row-b"><span class="t-sm">' + (plat === 'swiggy' ? 'Swiggy' : plat === 'zomato' ? 'Zomato' : 'Platform') + ' ' + C.esc(T('ne dikhaya')) + '</span>' +
             '<b class="mono">' + C.money(amt) + '</b></div>' +
             '<div class="row-b t-xs dim mt8"><span>' + C.esc(T('Commission + GST + gateway + TDS')) + '</span><span class="mono">-' + C.money(amt - s.net) + '</span></div>' +
-            '<div class="row-b mt8" style="padding-top:8px;border-top:1px solid rgba(255,255,255,.16)">' +
+            '<div class="row-b mt8" style="padding-top:8px;border-top:1px solid var(--hair-strong)">' +
             '<span class="t-sm"><b>' + C.esc(T('Aapke bank mein aayega')) + '</b></span>' +
             '<b class="mono" style="font-size:18px">' + C.money(s.net) + '</b></div>' +
             '<p class="t-xs dimmer mt8">' + C.esc(T('Is order par GST platform bharta hai (s.9(5)) — aap dobara mat bhariye.')) + '</p>' +
@@ -482,7 +482,7 @@
             return m ? modLabel(m) : id;
           });
           if (l.note) mods.push(l.note);
-          return '<div class="row-b" data-l="' + l.id + '" style="padding:6px 0;border-top:1px solid rgba(255,255,255,.08)">' +
+          return '<div class="row-b" data-l="' + l.id + '" style="padding:6px 0;border-top:1px solid var(--hair)">' +
             '<div class="row gap6 grow" style="min-width:0">' +
               '<span class="pill" style="padding:2px 8px;font-size:11px">' + C.qtyText(l.qtyMilli) + (l.uom !== 'plate' ? l.uom : '') + '</span>' +
               '<div class="grow" style="min-width:0">' +
@@ -490,7 +490,7 @@
                   (l.variant === 'half' ? ' <span class="t-xs dim">(half)</span>' : '') +
                   (l.lineType !== 'SALE' ? ' <span class="pill pill-violet" style="padding:0 6px;font-size:9px">' + C.esc(l.lineType === 'COMPLIMENTARY' ? T('Muft') : T('Staff')) + '</span>' : '') +
                 '</div>' +
-                (mods.length ? '<div class="t-xs" style="color:#ffd479">' + C.esc(mods.join(' · ')) + '</div>' : '') +
+                (mods.length ? '<div class="t-xs" style="color:var(--warn-ink)">' + C.esc(mods.join(' · ')) + '</div>' : '') +
               '</div>' +
             '</div>' +
             '<div class="row gap6">' +

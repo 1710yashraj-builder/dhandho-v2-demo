@@ -40,19 +40,34 @@
       number: bill.no,
       docType: bill.docType,
       createdAt: bill.at,
-      taxablePaise: bill.totals.taxable,
+      /* The spine re-checks that the bill adds up, so it needs the SAME parts
+         v1 used to build the total — not just the total. A real restaurant
+         bill is lines − discount + service charge + round-to-the-rupee, and
+         sending only the first two would make every genuine bill look wrong. */
+      taxablePaise: bill.totals.taxableBase,
       taxPaise: bill.totals.tax,
       discountPaise: bill.totals.discount || 0,
+      serviceChargePaise: bill.totals.serviceCharge || 0,
+      roundPaise: bill.totals.roundOff || 0,
       grandPaise: bill.totals.grand,
       status: bill.status || 'paid',
       channel: 'restaurant',
       deviceCode: d.device.code,
       lines: (bill.lines || []).filter(function (l) { return !l.voided; }).map(function (l) {
+        /* A comp / staff meal is on the bill but charged at zero — v1 leaves
+           it out of every total. Send it at rate 0 rather than dropping it:
+           the money then adds up exactly as the shop billed it, AND the dish
+           still reaches the recipe, so a free plate of paneer still takes
+           paneer out of the fridge. Dropping the line would quietly overstate
+           stock every time the owner fed someone. */
+        var charged = l.lineType === 'SALE';
         return {
           name: l.name,
           qtyMilli: l.qtyMilli,
-          unitPaise: l.unitPaise,
-          gstRate: l.taxTreatment === 'GST_5' ? 5 : (l.taxTreatment === 'GST_18' ? 18 : 0)
+          unitPaise: charged ? l.unitPaise : 0,
+          gstRate: charged
+            ? (l.taxTreatment === 'GST_5' ? 5 : (l.taxTreatment === 'GST_18' ? 18 : 0))
+            : 0
         };
       }),
       payments: (bill.payments || []).map(function (p) {

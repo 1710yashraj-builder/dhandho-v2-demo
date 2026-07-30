@@ -50,7 +50,7 @@
     waiter: ['waiter', 'order'],
     kitchen: ['kitchen'],
     cashier: ['cashier', 'waiter', 'order'],
-    owner: ['waiter', 'order', 'kitchen', 'cashier', 'owner', 'settings', 'menu']
+    owner: ['waiter', 'order', 'kitchen', 'cashier', 'owner', 'settings', 'menu', 'stock']
   };
   DR.allowedViews = function () {
     var d = C.db();
@@ -249,7 +249,7 @@
        Malik / Settings / Menu ask for it once per app session. */
     var dd = C.db();
     if (pinActive() && !DR.pinOk &&
-        (view === 'owner' || view === 'settings' || view === 'menu')) {
+        (view === 'owner' || view === 'settings' || view === 'menu' || view === 'stock')) {
       renderPinGate(view, arg);
       return;
     }
@@ -292,7 +292,7 @@
         '<h2 class="mt14">' + C.esc(T('PIN daaliye')) + '</h2>' +
         '<div class="row gap8 mt20" id="pinDots" style="justify-content:center">' +
           [0, 1, 2, 3].map(function () {
-            return '<span style="width:14px;height:14px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);background:transparent"></span>';
+            return '<span style="width:14px;height:14px;border-radius:50%;border:1.5px solid var(--on-glass-3);background:transparent"></span>';
           }).join('') +
         '</div>' +
         '<div class="grid g3 gap8 mt20" id="pinKeys">' +
@@ -306,7 +306,7 @@
 
     function paint() {
       C.els('#pinDots span').forEach(function (s, i) {
-        s.style.background = i < buf.length ? 'rgba(255,255,255,.9)' : 'transparent';
+        s.style.background = i < buf.length ? 'var(--on-glass)' : 'transparent';
       });
     }
     C.els('#pinKeys button').forEach(function (b) {
@@ -402,6 +402,35 @@
     document.documentElement.classList.toggle('lite', !!lite);
   }
   DR.applyLite = applyLite;
+  /* --------------------------------------------------------
+     Day / night skin
+
+     A counter next to a window at noon and a counter at 11pm are two
+     different screens. Default is "auto" — follow whatever the phone is
+     already set to, because the owner has already made that choice once.
+     -------------------------------------------------------- */
+  function applyTheme() {
+    var d = C.db();
+    var pref = d.setup.theme || 'auto';
+    var wantLight = pref === 'light' ||
+      (pref === 'auto' && global.matchMedia &&
+       global.matchMedia('(prefers-color-scheme: light)').matches);
+    document.documentElement.setAttribute('data-theme', wantLight ? 'light' : 'dark');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', wantLight ? '#eef4fa' : '#0f3050');
+  }
+  DR.applyTheme = applyTheme;
+
+  /* On "auto", follow the phone live — if it flips at sunset, so do we. */
+  if (global.matchMedia) {
+    var mq = global.matchMedia('(prefers-color-scheme: light)');
+    var onSystemTheme = function () {
+      if ((C.db().setup.theme || 'auto') === 'auto') applyTheme();
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onSystemTheme);
+    else if (mq.addListener) mq.addListener(onSystemTheme);
+  }
+
   DR.toggleLite = function () {
     var d = C.db();
     d.setup.lite = !d.setup.lite;
@@ -416,6 +445,7 @@
   function boot() {
     C.load();
     applyLite();
+    applyTheme();
     Ops.ensureSeedStaff();
 
     C.el('#btnHome').onclick = function () { DR.go('waiter'); };

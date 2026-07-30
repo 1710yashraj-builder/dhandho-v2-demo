@@ -109,7 +109,7 @@
 
         '<div class="glass card" style="margin-bottom:10px;padding:10px 12px">' +
           lines.map(function (l) {
-            return '<div class="row-b" style="padding:6px 0;border-top:1px solid rgba(255,255,255,.08)">' +
+            return '<div class="row-b" style="padding:6px 0;border-top:1px solid var(--hair)">' +
               '<div class="row gap6 grow" style="min-width:0">' +
                 '<span class="pill" style="padding:1px 7px;font-size:11px">' + C.qtyText(l.qtyMilli) + '</span>' +
                 '<span class="truncate t-sm">' + C.esc(l.name) +
@@ -196,7 +196,7 @@
         return '<div class="row-b t-sm" style="padding:3px 0"><span class="dim">' + r[0] + '</span>' +
           '<span class="mono">' + C.money(r[1]) + '</span></div>';
       }).join('') +
-      '<div class="row-b" style="padding-top:8px;margin-top:6px;border-top:1px solid rgba(255,255,255,.18)">' +
+      '<div class="row-b" style="padding-top:8px;margin-top:6px;border-top:1px solid var(--hair-strong)">' +
         '<b>' + C.esc(T('Total')) + '</b><b class="mono" style="font-size:19px">' + C.money(t.grand) + '</b></div>' +
       (t.compValue ? '<div class="t-xs dimmer mt8">' + C.esc(T('Muft diya gaya:')) + ' ' + C.money(t.compValue) + '</div>' : '') +
       (t.inclusive && t.taxRate ? '<div class="t-xs dimmer mt8">' + C.esc(T('Daam mein GST shaamil hai')) + '</div>' : '') +
@@ -355,7 +355,7 @@
           var ch = got() - need;
           bb.querySelector('#cpChange').innerHTML = ch > 0
             ? C.esc(T('Wapas dijiye')) + ' <b class="mono">' + C.money(ch) + '</b>'
-            : ch < 0 ? '<span style="color:#ffd479">' + C.esc(T('Baaki')) + ' <b class="mono">' + C.money(-ch) + '</b> ' + C.esc(T('— UPI/card se le lijiye')) + '</span>' : '';
+            : ch < 0 ? '<span style="color:var(--warn-ink)">' + C.esc(T('Baaki')) + ' <b class="mono">' + C.money(-ch) + '</b> ' + C.esc(T('— UPI/card se le lijiye')) + '</span>' : '';
         }
         C.els('[data-k]', bb).forEach(function (x) {
           x.onclick = function () {
@@ -535,7 +535,7 @@
       var reason = null;
       function paintLines() {
         b.querySelector('#csLines').innerHTML = liveLines.map(function (l) {
-          return '<div class="row-b" style="padding:6px 0;border-top:1px solid rgba(255,255,255,.08)">' +
+          return '<div class="row-b" style="padding:6px 0;border-top:1px solid var(--hair)">' +
             '<label class="row gap8 grow" style="min-width:0;cursor:pointer">' +
               '<input type="checkbox" data-k="' + l.id + '"' + (keep[l.id] ? ' checked' : '') + '>' +
               '<span class="truncate t-sm">' + C.qtyText(l.qtyMilli) + ' x ' + C.esc(l.name) + '</span>' +
@@ -613,7 +613,7 @@
 
         (draft.lines.length
           ? '<div class="glass card" style="margin-bottom:10px;padding:8px 12px">' + draft.lines.map(function (l, i) {
-              return '<div class="row-b" style="padding:5px 0;border-top:1px solid rgba(255,255,255,.08)">' +
+              return '<div class="row-b" style="padding:5px 0;border-top:1px solid var(--hair)">' +
                 '<span class="t-sm truncate grow">' + C.qtyText(l.qtyMilli) + ' x ' + C.esc(l.name) + '</span>' +
                 '<span class="row gap6"><span class="mono t-sm">' + C.money(Ops.linePaise(l), { decimals: 0 }) + '</span>' +
                 '<button class="btn btn-sm btn-ghost" data-x="' + i + '" style="min-height:26px;padding:0 8px">&#10005;</button></span>' +
@@ -752,7 +752,7 @@
         (st.byMode.card ? '<div class="row-b t-sm" style="padding:3px 0"><span class="dim">' + C.esc(T('Card')) + '</span><span class="mono">' + C.money(st.byMode.card) + '</span></div>' : '') +
         (st.cashIn ? '<div class="row-b t-sm" style="padding:3px 0"><span class="dim">' + C.esc(T('Cash daala')) + '</span><span class="mono">+' + C.money(st.cashIn) + '</span></div>' : '') +
         (st.cashOut ? '<div class="row-b t-sm" style="padding:3px 0"><span class="dim">' + C.esc(T('Cash nikala')) + '</span><span class="mono">-' + C.money(st.cashOut) + '</span></div>' : '') +
-        '<div class="row-b" style="padding-top:8px;margin-top:6px;border-top:1px solid rgba(255,255,255,.18)">' +
+        '<div class="row-b" style="padding-top:8px;margin-top:6px;border-top:1px solid var(--hair-strong)">' +
           '<b>' + C.esc(T('Golak mein hona chahiye')) + '</b><b class="mono">' + C.money(st.expectedCash) + '</b></div>' +
       '</div>' +
       '<label class="lbl">' + C.esc(T('Ginti ke baad kitna nikla?')) + '</label>' +

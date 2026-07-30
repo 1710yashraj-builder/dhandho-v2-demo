@@ -133,12 +133,18 @@
           C.esc(bad ? bad + ' FAIL' : warn ? warn + ' ⚠' : T('Sab theek hai')) + '</span>' +
       '</div>' +
 
+      /* Filled in after the engine answers. The old "Data size" row above
+         measured only THIS app's localStorage against a guessed 4.2 MB limit —
+         it never looked at the engine's database at all, which is where the
+         bills, recipes and stock ledger actually live. */
+      '<div id="drEngineStore"></div>' +
+
       '<div class="glass card" style="margin-bottom:12px;padding:8px 14px">' +
         ch.map(function (c) {
           var mark = c.ok ? '<span style="color:#56e39f">✓</span>'
-            : c.soft ? '<span style="color:#ffbe5c">⚠</span>'
-              : '<span style="color:#ff6a5e">✗</span>';
-          return '<div class="row-b" style="padding:7px 0;border-top:1px solid rgba(255,255,255,.08)">' +
+            : c.soft ? '<span style="color:var(--soft-ink)">⚠</span>'
+              : '<span style="color:var(--bad-ink)">✗</span>';
+          return '<div class="row-b" style="padding:7px 0;border-top:1px solid var(--hair)">' +
             '<span class="row gap8 t-sm" style="font-weight:560">' + mark + ' ' + C.esc(c.name) + '</span>' +
             '<span class="t-xs dim mono truncate" style="max-width:55%">' + C.esc(c.detail) + '</span>' +
           '</div>';
@@ -189,6 +195,8 @@
           ? T('Code galat hai') : String(e.message || e).slice(0, 60);
       });
     };
+    renderEngineStore();
+
     C.el('#drBackup').onclick = function () {
       C.download('dhandho-backup-' + C.dayKey() + '.json', JSON.stringify(C.db(), null, 1), 'application/json')
         .then(function (ok) {
@@ -204,6 +212,112 @@
           DR.toast(T('Poora backup download ho gaya'), 'good');
         });
     };
+  }
+
+  /* --------------------------------------------------------
+     Engine storage — the real numbers, not a guess.
+
+     This exists because the app used to hit a wall it could not see: the
+     engine database was a base64 blob in localStorage, capped near 5 MB, and
+     the write that failed was swallowed. The app looked perfect and saved
+     nothing. Now the browser tells us its own usage and quota, and any write
+     failure is kept and shown here.
+     -------------------------------------------------------- */
+  function mb(bytes) {
+    if (bytes === null || bytes === undefined) return '—';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return Math.round(bytes / 1024) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function renderEngineStore() {
+    var box = C.el('#drEngineStore');
+    if (!box) return;
+    var L = global.DhandhoLocal;
+    if (!L || !L.api || !L.api.storageHealth) return;   /* engine not booted */
+
+    L.api.storageHealth().then(function (h) {
+      if (DR.view !== 'doctor') return;
+      var box2 = C.el('#drEngineStore');
+      if (!box2) return;
+
+      var err = h.lastError;
+      var pct = h.percentUsed;
+      /* Amber well before it matters, because the owner needs time to act —
+         and at these quotas reaching 80% means something is genuinely wrong,
+         not that the shop has simply been busy. */
+      var tint = err ? 'tint-red' : (pct !== null && pct >= 80) ? 'tint-amber' : '';
+
+      box2.innerHTML =
+        '<div class="glass ' + tint + ' card" style="margin-bottom:12px">' +
+          '<div class="row-b"><b class="t-sm">' + C.esc(T('Hisaab ki jagah')) + '</b>' +
+            '<span class="pill ' + (err ? 'pill-red' : 'pill-green') + '">' +
+              C.esc(err ? T('gadbad') : T('theek')) + '</span></div>' +
+
+          (err
+            ? '<p class="t-sm mt8" style="color:var(--bad-ink);font-weight:600">' + C.esc(err.message) + '</p>'
+            : '') +
+
+          '<div class="grid g2 gap8 mt8">' +
+            cell(T('Database'), mb(h.snapshotBytes)) +
+            cell(T('Kul istemaal'), mb(h.usedBytes) + (pct !== null ? ' (' + pct + '%)' : '')) +
+            cell(T('Kul jagah'), mb(h.quotaBytes)) +
+            cell(T('Save hue'), String(h.writes) + (h.coalescedWrites ? ' (+' + h.coalescedWrites + ' jode)' : '')) +
+          '</div>' +
+
+          '<p class="t-xs dimmer mt8">' +
+            C.esc(T('Store')) + ': ' + C.esc(h.backend) +
+            ' · ' + C.esc(h.durable ? T('surakshit — browser mitayega nahi') : T('surakshit nahi — browser jagah ke liye mita sakta hai')) +
+            (h.legacyBytes ? ' · ' + C.esc(T('purana copy')) + ' ' + mb(h.legacyBytes) : '') +
+            (h.pendingWrite ? ' · ' + C.esc(T('save ho raha hai')) : '') +
+          '</p>' +
+
+          '<div class="row gap8 wrap mt8">' +
+            '<button class="btn btn-sm" id="drEngExport">' + C.esc(T('Engine backup')) + '</button>' +
+            (h.durable ? '' : '<button class="btn btn-sm btn-ghost" id="drEngDurable">' + C.esc(T('Surakshit karo')) + '</button>') +
+          '</div>' +
+          '<p class="t-xs dim mt8">' + C.esc(T('Recipe aur saamaan ka hisaab sirf yahin hai — iska backup alag se lijiye.')) + '</p>' +
+        '</div>';
+
+      var ex = C.el('#drEngExport');
+      if (ex) ex.onclick = function () {
+        L.api.exportDb().then(function (r) {
+          if (!r || !r.bytes || !r.bytes.length) {
+            DR.toast(T('Engine ka database khaali hai'), 'warn');
+            return;
+          }
+          /* A .sqlite file, not JSON: it is the database itself, so it can be
+             opened and read by anyone later without this app existing. */
+          var blob = new Blob([r.bytes], { type: 'application/x-sqlite3' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'dhandho-engine-' + C.dayKey() + '.sqlite';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          DR.toast(T('Engine backup download ho gaya') + ' (' + mb(r.size) + ')', 'good', 3200);
+        }).catch(function (e) {
+          DR.toast(String((e && e.message) || e).slice(0, 70), 'bad', 4000);
+        });
+      };
+
+      var du = C.el('#drEngDurable');
+      if (du) du.onclick = function () {
+        L.api.makeDurable().then(function (ok) {
+          DR.toast(ok ? T('Ab browser ye data nahi mitayega')
+                      : T('Browser ne mana kar diya — backup zaroori hai'), ok ? 'good' : 'warn', 4000);
+          renderEngineStore();
+        });
+      };
+    }).catch(function () { /* engine unreachable — the rest of the screen still works */ });
+  }
+
+  function cell(label, value) {
+    return '<div style="padding:8px;border-radius:12px;background:var(--well)">' +
+      '<div class="t-xs dim">' + C.esc(label) + '</div>' +
+      '<div class="mono" style="font-size:15px;font-weight:700">' + C.esc(value) + '</div></div>';
   }
 
   DR.register('doctor', doctorView);

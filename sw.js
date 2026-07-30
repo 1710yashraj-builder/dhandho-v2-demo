@@ -4,7 +4,7 @@
    is just how the app works. */
 /* Bump this on every release. A cache-first worker will otherwise happily
    serve yesterday's code to a shop that already installed the app. */
-var CACHE = 'dhandho-restaurant-v6';
+var CACHE = 'dhandho-restaurant-v7';
 
 /* Code must never be a release behind.
    A pure cache-first worker kept serving yesterday's JS until the shop
@@ -38,7 +38,18 @@ var ASSETS = [
   './js/ui-waiter.js',
   './js/ui-kitchen.js',
   './js/ui-cashier.js',
-  './js/ui-owner.js'
+  './js/ui-owner.js',
+  './js/ui-stock.js',
+  /* The v2 engine and the bridge that feeds it. These were missing, so a
+     FIRST open with no network fetched them and got index.html back (the
+     navigation fallback), which parses as HTML and throws — the Saamaan
+     screen and the spine mirror both silently failed on exactly the phone
+     that needed them most. The two .wasm files are what SQLite compiles to;
+     without them the engine cannot boot at all offline. */
+  './js/spine-bridge.js',
+  './dhandho-local.js',
+  './sql-wasm.wasm',
+  './sql-wasm-browser.wasm'
 ];
 
 self.addEventListener('install', function (e) {

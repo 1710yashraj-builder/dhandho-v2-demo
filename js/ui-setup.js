@@ -58,7 +58,7 @@
         '<div class="row gap6" style="margin-bottom:6px">' +
           [0, 1, 2, 3, 4].map(function (i) {
             return '<span style="height:4px;border-radius:9px;flex:1;background:' +
-              (i <= step ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.18)') + '"></span>';
+              (i <= step ? 'var(--on-glass)' : 'var(--hair-strong)') + '"></span>';
           }).join('') +
         '</div>' +
         '<h1 style="margin:16px 0 6px">' + title + '</h1>' +
@@ -74,7 +74,7 @@
   /* Inline validation hint under a field. Amber = fix it, blue = FYI. */
   function hint(id, msg, kind) {
     return '<p id="' + id + '" class="t-xs mt8" style="margin-left:2px;color:' +
-      (kind === 'info' ? 'rgba(255,255,255,.55)' : '#ffd479') + ';min-height:14px">' +
+      (kind === 'info' ? 'var(--on-glass-2)' : 'var(--warn-ink)') + ';min-height:14px">' +
       (msg ? C.esc(msg) : '') + '</p>';
   }
   function setHint(id, msg) {
@@ -246,7 +246,7 @@
         C.esc(T('Menu daalein')),
         C.esc(T('Ready menu se shuru kijiye — daam baad mein badal sakte hain. Ek minute ka kaam.')) +
           (draft.packs.length && !draft.packsTouched
-            ? ' <span style="color:#ffd479">' + C.esc(T('Aapke kaam ke hisaab se hum ne chun liya hai — chahein to badal dijiye.')) + '</span>'
+            ? ' <span style="color:var(--warn-ink)">' + C.esc(T('Aapke kaam ke hisaab se hum ne chun liya hai — chahein to badal dijiye.')) + '</span>'
             : ''),
         '<div class="col gap8" id="packPick">' +
           packs.map(function (p) {
@@ -574,7 +574,7 @@
           '<div class="row-b" style="margin-bottom:8px"><b>' + C.esc(cat.name) + '</b>' +
           '<span class="t-xs dimmer">' + list.length + '</span></div>' +
           list.map(function (i) {
-            return '<div class="row-b" style="padding:7px 0;border-top:1px solid rgba(255,255,255,.09)">' +
+            return '<div class="row-b" style="padding:7px 0;border-top:1px solid var(--hair)">' +
               '<div class="row gap8 grow" style="min-width:0">' +
                 '<span aria-hidden="true">' + i.icon + '</span>' +
                 '<div class="grow" style="min-width:0">' +
@@ -799,6 +799,12 @@
         '<div class="row-b"><b>' + C.esc(T('Screen')) + '</b>' +
           '<button class="btn btn-sm" id="stLite">' + C.esc(d.setup.lite ? T('Lite chalu') : T('Glass chalu')) + '</button></div>' +
         '<p class="t-xs dim mt8">' + C.esc(T('Purana ya dheema phone ho to Lite mode chalaiye — sab kuch wahi rahega, sirf chamak hat jaayegi.')) + '</p>' +
+        '<div class="mt14"><label class="lbl">' + C.esc(T('Roshni')) + '</label><select class="field" id="stTheme">' +
+          [['auto', T('Apne aap (phone jaisa)')], ['dark', T('Raat — kaala')], ['light', T('Din — safed')]].map(function (t) {
+            return '<option value="' + t[0] + '"' + (t[0] === (d.setup.theme || 'auto') ? ' selected' : '') + '>' + C.esc(t[1]) + '</option>';
+          }).join('') +
+        '</select>' +
+        '<p class="t-xs dimmer mt8">' + C.esc(T('Kaunter par dhoop aati ho to "Din" chuniye — screen padhne mein aasaan ho jaayegi.')) + '</p></div>' +
         '<div class="mt14"><label class="lbl">' + C.esc(T('Bhasha')) + '</label><select class="field" id="stLang">' +
           [['hi', 'हिंदी'], ['hinglish', 'Hinglish'], ['en', 'English']].map(function (l) {
             return '<option value="' + l[0] + '"' + (l[0] === d.setup.lang ? ' selected' : '') + '>' + l[1] + '</option>';
@@ -808,8 +814,10 @@
 
       '<div class="glass card" style="margin-bottom:10px">' +
         '<b>' + C.esc(T('Menu')) + '</b>' +
-        '<div class="row gap8 mt8"><button class="btn btn-sm" id="stMenu">' + C.esc(T('Menu kholein')) + '</button>' +
+        '<div class="row gap8 wrap mt8"><button class="btn btn-sm" id="stMenu">' + C.esc(T('Menu kholein')) + '</button>' +
+        '<button class="btn btn-sm" id="stStock">' + C.esc(T('Saamaan')) + '</button>' +
         '<button class="btn btn-sm btn-ghost" id="stStaff">' + C.esc(T('Staff')) + '</button></div>' +
+        '<p class="t-xs dim mt8">' + C.esc(T('Saamaan mein: kya kitna bacha hai, kis dish mein kya lagta hai, aur ek plate par kitna bachta hai.')) + '</p>' +
       '</div>' +
 
       '<div class="glass ' + (d.setup.demo ? 'tint-amber' : '') + ' card" style="margin-bottom:10px">' +
@@ -861,7 +869,13 @@
       global.DR.go('settings');
     };
     C.el('#stLite').onclick = function () { global.DR.toggleLite(); settingsView(root); };
+    C.el('#stTheme').onchange = function (e) {
+      C.db().setup.theme = e.target.value;
+      C.save(true);
+      global.DR.applyTheme();
+    };
     C.el('#stMenu').onclick = function () { global.DR.go('menu'); };
+    C.el('#stStock').onclick = function () { global.DR.go('stock'); };
     C.el('#stStaff').onclick = function () { global.DR.pickStaff(); };
     C.el('#stChain').onclick = function () {
       var r = C.verifyChain();
@@ -941,7 +955,7 @@
       '</div>' +
       (d.cloud.enabled
         ? ''
-        : '<p class="t-xs mt8" style="color:#ffd479">' + C.esc(T('Cloud band hai — naya data sirf is phone par hai. Backup file hi suraksha hai.')) + '</p>');
+        : '<p class="t-xs mt8" style="color:var(--warn-ink)">' + C.esc(T('Cloud band hai — naya data sirf is phone par hai. Backup file hi suraksha hai.')) + '</p>');
   }
 
   function pairSheet() {

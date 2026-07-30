@@ -39,7 +39,7 @@
         ? '<div class="glass card" style="margin-bottom:12px">' +
             '<div class="row-b"><b class="t-sm">' + C.esc(T('Roz ka kharcha nikla?')) + '</b>' +
             '<span class="t-xs dim">' + C.money(be.perDayPaise, { decimals: 0 }) + ' ' + C.esc(T('chahiye')) + '</span></div>' +
-            '<div style="height:12px;border-radius:99px;background:rgba(0,0,0,.28);margin-top:10px;overflow:hidden">' +
+            '<div style="height:12px;border-radius:99px;background:var(--well-deep);margin-top:10px;overflow:hidden">' +
               '<div style="height:100%;width:' + pct + '%;border-radius:99px;background:linear-gradient(90deg,#45c088,#7ee0b0)"></div>' +
             '</div>' +
             '<div class="t-xs dim mt8">' + C.esc(st.sales >= be.perDayPaise
@@ -52,6 +52,10 @@
             '<button class="btn btn-sm mt8" id="oFixed">' + C.esc(T('Kharcha daalein')) + '</button>' +
           '</div>') +
 
+      /* --- saamaan running low: filled in after the engine answers, so a
+             slow disk never holds up the one number he opened this for --- */
+      '<div id="oStockLow"></div>' +
+
       /* --- the nightly card: the cheapest theft signal there is --- */
       '<div class="glass ' + ((st.cancelled || st.orphanKots || st.discount) ? 'tint-amber' : '') + ' card" style="margin-bottom:12px">' +
         '<b class="t-sm">' + C.esc(T('Aaj raat ka hisaab')) + '</b>' +
@@ -62,7 +66,7 @@
           statCell(T('Parcha bina bill'), st.orphanKots, null) +
         '</div>' +
         ((st.cancelled || st.orphanKots)
-          ? '<p class="t-xs mt8" style="color:#ffe08a">' + C.esc(T('Dekh lijiye — kaunsa item, kis waqt, kisne.')) + '</p>'
+          ? '<p class="t-xs mt8" style="color:var(--warn-ink)">' + C.esc(T('Dekh lijiye — kaunsa item, kis waqt, kisne.')) + '</p>'
           : '<p class="t-xs dim mt8">' + C.esc(T('Sab saaf hai.')) + '</p>') +
         '<button class="btn btn-sm mt8" id="oVoids">' + C.esc(T('Poora dekhein')) + '</button>' +
       '</div>' +
@@ -86,9 +90,9 @@
             '<b class="t-sm">' + C.esc(T('Online order')) + '</b>' +
             '<div class="row-b mt8"><span class="t-sm dim">' + C.esc(T('App par dikha')) + '</span><b class="mono">' + C.money(st.aggGross) + '</b></div>' +
             '<div class="row-b"><span class="t-sm dim">' + C.esc(T('Bank mein aayega')) + '</span><b class="mono">' + C.money(st.aggNet) + '</b></div>' +
-            '<div class="row-b" style="padding-top:8px;margin-top:6px;border-top:1px solid rgba(255,255,255,.18)">' +
+            '<div class="row-b" style="padding-top:8px;margin-top:6px;border-top:1px solid var(--hair-strong)">' +
               '<span class="t-sm">' + C.esc(T('Platform le gaya')) + '</span>' +
-              '<b class="mono" style="color:#ffb0a8">' + C.money(st.aggLost) + '</b></div>' +
+              '<b class="mono" style="color:var(--bad-ink)">' + C.money(st.aggLost) + '</b></div>' +
             '<button class="btn btn-sm mt8" id="oRecon">' + C.esc(T('Payout milaan karein')) + '</button>' +
           '</div>'
         : '') +
@@ -126,6 +130,30 @@
     C.el('#oExport').onclick = exportSheet;
     C.el('#oClose').onclick = function () { global.DRCashier.dayCloseSheet(); };
 
+    /* Ask the v2 engine what is about to run out. If it says nothing — or
+       cannot answer at all — this card simply never appears; the owner's
+       screen is never blocked on it. */
+    if (DR.stockLowPeek) {
+      DR.stockLowPeek().then(function (low) {
+        var box = C.el('#oStockLow');
+        if (!box || !low || !low.length || DR.view !== 'owner') return;
+        box.innerHTML =
+          '<div class="glass tint-amber card" style="margin-bottom:12px">' +
+            '<div class="row-b"><b class="t-sm">' + C.esc(T('Ye khatam hone wala hai')) + '</b>' +
+              '<span class="pill pill-amber">' + low.length + '</span></div>' +
+            '<div class="row gap8 wrap mt8">' +
+              low.slice(0, 6).map(function (p) {
+                return '<span class="pill">' + C.esc(p.name) + ' ' +
+                  C.esc(String(Math.round((p.onHandMilli / 1000) * 100) / 100) + ' ' + (p.unit || '')) + '</span>';
+              }).join('') +
+            '</div>' +
+            '<button class="btn btn-sm mt8" id="oStockGo">' + C.esc(T('Saamaan kholein')) + '</button>' +
+          '</div>';
+        var go = C.el('#oStockGo');
+        if (go) go.onclick = function () { DR.go('stock'); };
+      });
+    }
+
     /* D5 — anything labelled live must actually tick. */
     DR.every(5000, function () {
       var e = C.el('#oSales');
@@ -134,7 +162,7 @@
   }
 
   function statCell(label, count, amount) {
-    return '<div style="padding:8px;border-radius:12px;background:rgba(0,0,0,.18)">' +
+    return '<div style="padding:8px;border-radius:12px;background:var(--well)">' +
       '<div class="t-xs dim">' + label + '</div>' +
       '<div class="mono" style="font-size:17px;font-weight:700">' +
         (count !== null && count !== undefined ? count : C.money(amount || 0, { decimals: 0 })) +
@@ -152,7 +180,7 @@
     ];
     var total = modes.reduce(function (n, m) { return n + (st.byMode[m[0]] || 0); }, 0);
     if (!total) return '<p class="t-xs dim">' + C.esc(T('Abhi koi payment nahi.')) + '</p>';
-    return '<div style="display:flex;height:14px;border-radius:99px;overflow:hidden;background:rgba(0,0,0,.25)">' +
+    return '<div style="display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--well)">' +
       modes.map(function (m) {
         var v = st.byMode[m[0]] || 0;
         if (!v) return '';
@@ -201,7 +229,7 @@
           var who = d.staff.filter(function (s) { return s.id === e.by; })[0];
           var reason = (C.VOID_REASONS.concat(C.DISCOUNT_REASONS))
             .filter(function (r) { return r.id === e.data.reason; })[0];
-          return '<div class="row-b" style="padding:7px 0;border-top:1px solid rgba(255,255,255,.08)">' +
+          return '<div class="row-b" style="padding:7px 0;border-top:1px solid var(--hair)">' +
             '<div class="grow" style="min-width:0">' +
               '<div class="t-sm truncate">' + (e.type === 'BILL_CANCEL' ? C.esc(T('Bill cancel')) + ' ' + C.esc(e.data.no || '') : C.esc(e.data.name || T('Item hatao'))) + '</div>' +
               '<div class="t-xs dimmer">' + C.hhmm(e.ts) + ' &middot; ' + C.esc(who ? who.name : 'staff') +
@@ -304,7 +332,7 @@
         '</div>' +
         (gapRows.length
           ? '<div class="mt14">' + gapRows.slice(0, 12).map(function (m) {
-              return '<div class="row-b t-xs" style="padding:3px 0;border-top:1px solid rgba(255,255,255,.10)">' +
+              return '<div class="row-b t-xs" style="padding:3px 0;border-top:1px solid var(--hair)">' +
                 '<span class="mono">' + C.esc(m.ref) + '</span>' +
                 '<span>' + C.esc(T('milna tha')) + ' <b class="mono">' + C.money(m.expected, { decimals: 0 }) + '</b>, ' + C.esc(T('aaya')) + ' <b class="mono">' + C.money(m.received, { decimals: 0 }) + '</b></span>' +
               '</div>';

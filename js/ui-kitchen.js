@@ -118,7 +118,7 @@
                   (l.variant === 'half' ? ' (' + C.esc(T('Half').toUpperCase()) + ')' : '') +
                   (l.lineType !== 'SALE' ? ' <span class="pill pill-violet" style="padding:0 6px;font-size:9px">' + C.esc(T('Muft').toUpperCase()) + '</span>' : '') +
                 '</div>' +
-                (mods.length ? '<div class="t-xs" style="color:#ffe08a;font-weight:600">' + C.esc(mods.join(' · ')) + '</div>' : '') +
+                (mods.length ? '<div class="t-xs" style="color:var(--warn-ink);font-weight:600">' + C.esc(mods.join(' · ')) + '</div>' : '') +
                 '</div>' +
               '</div></div>';
           }).join('') + '</div>' +

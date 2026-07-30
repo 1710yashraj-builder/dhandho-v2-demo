@@ -48,6 +48,21 @@
   --on-glass-2: rgba(255, 255, 255, 0.78);
   --on-glass-3: rgba(255, 255, 255, 0.55);
 
+  /* Status ink + inset wells. These used to be hardcoded hex inside the
+     screens, which is exactly why a light skin was impossible: seven files
+     each held their own idea of "warning yellow". Named once, both skins
+     get them for free. */
+  --warn-ink: #ffd479;
+  --bad-ink:  #ffb0a8;
+  --soft-ink: #ffbe5c;
+  --well:     rgba(0, 0, 0, 0.22);
+  --well-deep: rgba(0, 0, 0, 0.28);
+
+  /* Hairline rules between rows. White-at-low-alpha vanishes on a pale page,
+     so these are named rather than written inline in nine screens. */
+  --hair:        rgba(255, 255, 255, 0.08);
+  --hair-strong: rgba(255, 255, 255, 0.18);
+
   --focus: #ffd479;
 
   --r-sm: 12px;
@@ -481,3 +496,98 @@ html.lite .dot-live { animation: none; }
   .g-auto { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
   .tabbar { left: 50%; transform: translateX(-50%); width: min(760px, calc(100% - 20px)); }
 }
+
+/* ============================================================
+   LIGHT MODE — a daylight skin for a counter next to a window.
+
+   Only the TOKENS change; not one component rule is touched, which is why
+   every screen inherits it for free. Dark stays the default: most billing
+   happens after dark, and the glass look was designed against it.
+
+   The one thing that does NOT simply invert is the specular sweep. On a dark
+   wallpaper a white gradient in `screen` blend reads as light catching an
+   edge; on a pale one it only washes the card out until it disappears into
+   the page. So in daylight the glass is frosted WHITE and the separation is
+   carried by the border and the shadow instead.
+   ============================================================ */
+html[data-theme="light"] {
+  --bg-grad:
+    radial-gradient(1100px 760px at 10% -10%, #e4eefa 0%, transparent 60%),
+    radial-gradient(900px 700px  at 94% 2%,   #eef4fb 0%, transparent 58%),
+    linear-gradient(168deg, #eef3f9 0%, #e6edf6 52%, #dde7f2 100%);
+
+  /* Frosted white, not a grey tint — cards sit ON the page, not in it. */
+  --glass-fill:      rgba(255, 255, 255, 0.78);
+  --glass-fill-soft: rgba(255, 255, 255, 0.62);
+  --glass-fill-hi:   rgba(255, 255, 255, 0.94);
+  --glass-border:    rgba(255, 255, 255, 0.95);
+  --glass-border-lo: rgba(16, 46, 76, 0.10);
+
+  /* The shadow does the lifting that the highlight does at night. */
+  --glass-shadow:    0 12px 34px rgba(16, 46, 76, 0.14), 0 2px 6px rgba(16, 46, 76, 0.07);
+  --glass-shadow-lo: 0 4px 14px rgba(16, 46, 76, 0.09), 0 1px 3px rgba(16, 46, 76, 0.05);
+  --specular:        rgba(255, 255, 255, 1);
+
+  /* Text on glass flips from white to ink — the single most important line
+     here. Without it every label would be white-on-white and invisible. */
+  --on-glass:   #0b1f33;
+  --on-glass-2: rgba(11, 31, 51, 0.70);
+  --on-glass-3: rgba(11, 31, 51, 0.46);
+
+  --focus: #a25f0c;
+
+  /* On white, pale yellow is unreadable — these go dark enough to pass as
+     body text while still reading as a warning. */
+  --warn-ink: #8a5200;
+  --bad-ink:  #a8271c;
+  --soft-ink: #8a5200;
+  --well:     rgba(16, 46, 76, 0.07);
+  --well-deep: rgba(16, 46, 76, 0.10);
+  --hair:        rgba(16, 46, 76, 0.10);
+  --hair-strong: rgba(16, 46, 76, 0.18);
+}
+
+/* The selected tab is a white lift on a dark page; on a light one that is
+   invisible, so it becomes a tinted chip in the brand blue.
+   The unselected rule MUST come first — same specificity, so whichever is
+   written last wins, and putting it after left the current tab unreadable. */
+html[data-theme="light"] .tabbar button { color: var(--on-glass-3); }
+html[data-theme="light"] .tabbar button[aria-current="page"] {
+  color: var(--blue-800);
+  background: linear-gradient(180deg, rgba(46,109,164,.22), rgba(46,109,164,.10));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 8px rgba(16,46,76,.12);
+}
+
+/* Screen-blending white onto white is invisible. Overlay keeps the sheen. */
+html[data-theme="light"] .glass::after {
+  mix-blend-mode: overlay;
+  opacity: 0.55;
+}
+
+/* Top chrome: white frost rather than a lighten of an already-light page. */
+html[data-theme="light"] .glass-live {
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.66));
+}
+
+/* Colour tints are mixed for a dark backdrop. At these alphas on white they
+   glow and swallow the ink, so every one drops to a wash. */
+html[data-theme="light"] .tint-blue   { background-image: linear-gradient(180deg, rgba(46,109,164,.20), rgba(46,109,164,.06)); }
+html[data-theme="light"] .tint-green  { background-image: linear-gradient(180deg, rgba(47,158,107,.22), rgba(47,158,107,.06)); }
+html[data-theme="light"] .tint-amber  { background-image: linear-gradient(180deg, rgba(232,163,61,.28), rgba(232,163,61,.08)); }
+html[data-theme="light"] .tint-red    { background-image: linear-gradient(180deg, rgba(209,72,63,.22), rgba(209,72,63,.06)); }
+html[data-theme="light"] .tint-violet { background-image: linear-gradient(180deg, rgba(123,97,184,.22), rgba(123,97,184,.06)); }
+html[data-theme="light"] .tint-cream  { background-image: linear-gradient(180deg, rgba(232,199,132,.26), rgba(232,199,132,.07)); }
+
+/* Pills carry status at a glance — they need real saturation on white. */
+html[data-theme="light"] .pill-green  { background: rgba(47,158,107,.20);  border-color: rgba(47,158,107,.45); }
+html[data-theme="light"] .pill-amber  { background: rgba(214,138,20,.22);  border-color: rgba(214,138,20,.50); }
+html[data-theme="light"] .pill-red    { background: rgba(209,72,63,.18);   border-color: rgba(209,72,63,.45); }
+html[data-theme="light"] .pill-violet { background: rgba(123,97,184,.18);  border-color: rgba(123,97,184,.45); }
+
+/* Lite mode drops the radial wallpaper on weak phones — in both skins. */
+html[data-theme="light"].lite body {
+  --bg-grad: linear-gradient(168deg, #eef3f9 0%, #e6edf6 52%, #dde7f2 100%);
+}
+
+/* A printed bill is ink on white whatever the screen is doing. */
+@media print { html, html[data-theme="light"] { --on-glass: #000; } }
