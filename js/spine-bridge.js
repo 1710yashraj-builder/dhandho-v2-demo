@@ -30,6 +30,17 @@
     try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q.slice(-500))); } catch (e) {}
   }
 
+  /* The two sides spell udhaar differently: this app has always called it
+     'due', the spine calls it 'credit'. Sending 'due' through unchanged meant
+     the spine did not recognise it as a credit sale at all — no khata entry
+     was written, so the debt was silently dropped, and the guard that refuses
+     a nameless udhaar bill never fired either. Map it once, here at the
+     boundary, rather than teaching either side the other's vocabulary. */
+  function spineMode(mode) {
+    if (mode === 'due') return 'credit';
+    return mode;
+  }
+
   /* Translate v1's shapes into the spine's nouns. v1 already speaks in the
      right concepts (bill, line, payment, item), so this is a rename, not a
      redesign — which is exactly why the port is small. */
@@ -52,6 +63,12 @@
       grandPaise: bill.totals.grand,
       status: bill.status || 'paid',
       channel: 'restaurant',
+      /* Carry the customer across. Without this an udhaar bill mirrors as a
+         debt nobody owes — the ingest side now REFUSES that rather than
+         accepting an orphan receivable, so a credit bill with no name stays
+         in this queue where it can be seen, instead of vanishing. */
+      customerName: (bill.customer && bill.customer.name) || bill.customerName || null,
+      customerPhone: (bill.customer && bill.customer.phone) || bill.customerPhone || null,
       deviceCode: d.device.code,
       lines: (bill.lines || []).filter(function (l) { return !l.voided; }).map(function (l) {
         /* A comp / staff meal is on the bill but charged at zero — v1 leaves
@@ -71,7 +88,7 @@
         };
       }),
       payments: (bill.payments || []).map(function (p) {
-        return { mode: p.mode, amountPaise: p.amountPaise };
+        return { mode: spineMode(p.mode), amountPaise: p.amountPaise };
       })
     };
   }

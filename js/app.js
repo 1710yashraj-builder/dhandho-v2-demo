@@ -49,8 +49,8 @@
   var ROLE_VIEWS = {
     waiter: ['waiter', 'order'],
     kitchen: ['kitchen'],
-    cashier: ['cashier', 'waiter', 'order'],
-    owner: ['waiter', 'order', 'kitchen', 'cashier', 'owner', 'settings', 'menu', 'stock']
+    cashier: ['cashier', 'waiter', 'order', 'khata'],
+    owner: ['waiter', 'order', 'kitchen', 'cashier', 'owner', 'settings', 'menu', 'stock', 'khata']
   };
   DR.allowedViews = function () {
     var d = C.db();

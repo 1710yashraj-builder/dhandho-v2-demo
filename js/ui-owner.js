@@ -122,6 +122,11 @@
       '<div class="grid g2 gap8" style="margin-bottom:20px">' +
         '<button class="btn" id="oExport">\u{1F4E4} ' + C.esc(T('Hisaab nikalein')) + '</button>' +
         '<button class="btn" id="oClose">\u{1F319} ' + C.esc(T('Din band')) + '</button>' +
+      '</div>' +
+
+      '<div class="grid g2 gap8" style="margin-bottom:20px">' +
+        '<button class="btn" id="oKhata">\u{1F4D2} ' + C.esc(T('Udhaar khaata')) + '</button>' +
+        '<button class="btn" id="oStock">\u{1F9C2} ' + C.esc(T('Saamaan')) + '</button>' +
       '</div>';
 
     var fx = C.el('#oFixed'); if (fx) fx.onclick = function () { DR.go('settings'); };
@@ -129,6 +134,8 @@
     var rc = C.el('#oRecon'); if (rc) rc.onclick = function () { DR.go('owner', { recon: true }); };
     C.el('#oExport').onclick = exportSheet;
     C.el('#oClose').onclick = function () { global.DRCashier.dayCloseSheet(); };
+    var kh = C.el('#oKhata'); if (kh) kh.onclick = function () { DR.go('khata'); };
+    var stk = C.el('#oStock'); if (stk) stk.onclick = function () { DR.go('stock'); };
 
     /* Ask the v2 engine what is about to run out. If it says nothing — or
        cannot answer at all — this card simply never appears; the owner's

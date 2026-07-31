@@ -297,11 +297,7 @@
         C.el('#pCash').onclick = function () { cashPad(); };
         C.el('#pUpi').onclick = function () { upiPad(); };
         C.el('#pCard').onclick = function () { addPart('card', left(), ''); };
-        C.el('#pDue').onclick = function () {
-          DR.confirm(T('Udhaar likhein?'), C.money(left()) + ' ' + T('khaate mein chadh jaayega.'), T('Haan'), function () {
-            addPart('due', left(), '');
-          });
-        };
+        C.el('#pDue').onclick = function () { udhaarSheet(b, left(), addPart); };
       }
       C.el('#pSlip').onclick = function () { global.DRPrint.showBill(b); };
       C.el('#pCancel').onclick = function () { cancelSheet(b); };
@@ -811,6 +807,73 @@
         doClose();
       };
     });
+  }
+
+  /* --------------------------------------------------------
+     UDHAAR — ask WHO before writing it down.
+
+     This button used to say "khaate mein chadh jaayega" (it will go on the
+     account) and then record a payment of mode 'due' against nobody. There was
+     no account. The bill closed, the table cleared, the money was neither in
+     the drawer nor owed by anyone nameable, and the only trace was a colour in
+     one bar on the owner's screen. A shopkeeper cannot collect from that.
+
+     So the name is now the price of using the button. Phone is optional but
+     asked for, because it is the only thing that reliably identifies the same
+     regular next week — three khatas for one person is how a balance goes
+     missing.
+     -------------------------------------------------------- */
+  function udhaarSheet(bill, amount, addPart) {
+    var recent = recentUdhaarNames();
+
+    DR.sheet(T('Udhaar kiske naam?'),
+      '<div class="glass tint-amber card" style="margin-bottom:12px">' +
+        '<div class="row-b"><span class="t-sm">' + C.esc(T('Khaate mein jaayega')) + '</span>' +
+        '<b class="mono t-lg">' + C.money(amount) + '</b></div>' +
+      '</div>' +
+      '<label class="lbl">' + C.esc(T('Naam')) + '</label>' +
+      '<input class="field" id="udName" autocomplete="off" placeholder="' + C.esc(T('jaise Sharma ji')) + '">' +
+      (recent.length
+        ? '<div class="row gap8 wrap mt8">' + recent.map(function (n) {
+            return '<button class="btn btn-sm btn-ghost" data-ud="' + C.esc(n) + '">' + C.esc(n) + '</button>';
+          }).join('') + '</div>'
+        : '') +
+      '<div class="mt14"><label class="lbl">' + C.esc(T('Phone (marzi se)')) + '</label>' +
+        '<input class="field" id="udPhone" type="tel" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="98xxxxxxxx"></div>' +
+      '<p class="t-xs dim mt8">' + C.esc(T('Phone daal dijiye to agli baar wahi khaata khulega — naam ek jaisa hone par bhi.')) + '</p>' +
+      '<button class="btn btn-primary mt20" id="udGo" style="width:100%">' + C.esc(T('Udhaar likh dijiye')) + '</button>',
+      function (bx) {
+        C.els('[data-ud]', bx).forEach(function (btn) {
+          btn.onclick = function () { bx.querySelector('#udName').value = btn.dataset.ud; };
+        });
+        bx.querySelector('#udGo').onclick = function () {
+          var name = (bx.querySelector('#udName').value || '').trim();
+          var phone = (bx.querySelector('#udPhone').value || '').replace(/\D/g, '');
+          if (!name) {
+            DR.toast(T('Naam likhiye — bina naam ka udhaar wapas nahi aata'), 'warn', 3600);
+            return;
+          }
+          /* Stored on the BILL, so it survives on the record and reaches the
+             khata through the bridge. */
+          bill.customer = { name: name, phone: phone || null };
+          C.logEvent('UDHAAR_NAMED', { billId: bill.id, name: name, amount: amount });
+          C.save(true);
+          DR.closeSheet();
+          setTimeout(function () { addPart('due', amount, name); }, 80);
+        };
+      });
+  }
+
+  /* Names this shop has given udhaar to recently — one tap instead of retyping
+     a regular's name every week. */
+  function recentUdhaarNames() {
+    var seen = {}, out = [];
+    var bills = (C.db().bills || []);
+    for (var i = bills.length - 1; i >= 0 && out.length < 6; i--) {
+      var c = bills[i].customer;
+      if (c && c.name && !seen[c.name]) { seen[c.name] = 1; out.push(c.name); }
+    }
+    return out;
   }
 
   DR.register('cashier', cashierView);
