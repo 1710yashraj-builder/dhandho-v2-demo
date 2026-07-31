@@ -4,7 +4,7 @@
    is just how the app works. */
 /* Bump this on every release. A cache-first worker will otherwise happily
    serve yesterday's code to a shop that already installed the app. */
-var CACHE = 'dhandho-restaurant-v8';
+var CACHE = 'dhandho-restaurant-v9';
 
 /* Code must never be a release behind.
    A pure cache-first worker kept serving yesterday's JS until the shop
